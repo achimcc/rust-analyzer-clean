@@ -103,7 +103,10 @@ xflags::xflags! {
 
         cmd proc-macro {}
 
-        cmd json {}
+        cmd json
+            /// Directory with Cargo.toml.
+            required path: PathBuf 
+        {}
 
     }
 }
@@ -195,7 +198,9 @@ pub struct Search {
 pub struct ProcMacro;
 
 #[derive(Debug)]
-pub struct Json;
+pub struct Json{
+    pub path: PathBuf,
+}
 
 impl RustAnalyzer {
     pub const HELP: &'static str = Self::HELP_;

@@ -5,7 +5,7 @@ use crate::cli::flags;
 impl flags::Json {
     pub fn run(self) -> anyhow::Result<()> {
         let _p = profile::span("json");
-        println!("Json!");
+        println!("Json!, path: {:?}", &self.path);
         Ok(())
     }
 }
