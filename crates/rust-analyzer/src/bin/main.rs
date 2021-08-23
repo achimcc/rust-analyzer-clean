@@ -87,6 +87,7 @@ fn try_main() -> Result<()> {
         flags::RustAnalyzerCmd::Diagnostics(cmd) => cmd.run()?,
         flags::RustAnalyzerCmd::Ssr(cmd) => cmd.run()?,
         flags::RustAnalyzerCmd::Search(cmd) => cmd.run()?,
+        flags::RustAnalyzerCmd::Json(cmd) => cmd.run()?,
     }
     Ok(())
 }

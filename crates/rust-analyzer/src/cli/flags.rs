@@ -102,6 +102,9 @@ xflags::xflags! {
         }
 
         cmd proc-macro {}
+
+        cmd json {}
+
     }
 }
 
@@ -129,6 +132,7 @@ pub enum RustAnalyzerCmd {
     Ssr(Ssr),
     Search(Search),
     ProcMacro(ProcMacro),
+    Json(Json),
 }
 
 #[derive(Debug)]
@@ -189,6 +193,9 @@ pub struct Search {
 
 #[derive(Debug)]
 pub struct ProcMacro;
+
+#[derive(Debug)]
+pub struct Json;
 
 impl RustAnalyzer {
     pub const HELP: &'static str = Self::HELP_;
