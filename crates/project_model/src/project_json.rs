@@ -5,7 +5,7 @@
 //! system to generate `rust-project.json` which can be ingested by
 //! rust-analyzer.
 
-use std::path::PathBuf;
+use std::{path::PathBuf, str::FromStr};
 
 use base_db::{CrateDisplayName, CrateId, CrateName, Dependency, Edition};
 use paths::{AbsPath, AbsPathBuf};
@@ -103,6 +103,7 @@ impl ProjectJson {
                 .collect::<Vec<_>>(),
         }
     }
+
     /// Returns the number of crates in the project.
     pub fn n_crates(&self) -> usize {
         self.crates.len()
@@ -119,31 +120,36 @@ impl ProjectJson {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct ProjectJsonData {
-    sysroot_src: Option<PathBuf>,
-    crates: Vec<CrateData>,
+    pub(crate) sysroot_src: Option<PathBuf>,
+    pub(crate) crates: Vec<CrateData>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
-struct CrateData {
-    display_name: Option<String>,
-    root_module: PathBuf,
-    edition: EditionData,
-    deps: Vec<DepData>,
+pub struct CrateData {
+    pub(crate) display_name: Option<String>,
+    pub(crate) root_module: PathBuf,
+    pub(crate) edition: EditionData,
+    pub(crate) deps: Vec<DepData>,
     #[serde(default)]
-    cfg: Vec<CfgFlag>,
-    target: Option<String>,
+    pub(crate) cfg: Vec<CfgFlag>,
+    pub(crate) target: Option<String>,
     #[serde(default)]
-    env: FxHashMap<String, String>,
-    proc_macro_dylib_path: Option<PathBuf>,
-    is_workspace_member: Option<bool>,
-    source: Option<CrateSource>,
+    pub(crate) env: FxHashMap<String, String>,
+    pub(crate) proc_macro_dylib_path: Option<PathBuf>,
+    pub(crate) is_workspace_member: Option<bool>,
+    pub(crate) source: Option<CrateSource>,
     #[serde(default)]
-    is_proc_macro: bool,
+    pub(crate) is_proc_macro: bool,
+}
+
+#[derive(Debug)]
+pub struct ParseEditionError {
+    invalid_input: String,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename = "edition")]
-enum EditionData {
+pub enum EditionData {
     #[serde(rename = "2015")]
     Edition2015,
     #[serde(rename = "2018")]
@@ -162,17 +168,41 @@ impl From<EditionData> for Edition {
     }
 }
 
-#[derive(Deserialize, Debug, Clone)]
-struct DepData {
-    /// Identifies a crate by position in the crates array.
-    #[serde(rename = "crate")]
-    krate: usize,
-    #[serde(deserialize_with = "deserialize_crate_name")]
-    name: CrateName,
+impl From<Edition> for EditionData {
+    fn from(data: Edition) -> Self {
+        match data {
+            Edition::Edition2015 => EditionData::Edition2015,
+            Edition::Edition2018 => EditionData::Edition2018,
+            Edition::Edition2021 => EditionData::Edition2021,
+        }
+    }
+}
+
+impl FromStr for EditionData {
+    type Err = ParseEditionError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let res = match s {
+            "2015" => EditionData::Edition2015,
+            "2018" => EditionData::Edition2018,
+            "2021" => EditionData::Edition2021,
+            _ => return Err(ParseEditionError { invalid_input: s.to_string() }),
+        };
+        Ok(res)
+    }
 }
 
 #[derive(Deserialize, Debug, Clone)]
-struct CrateSource {
+pub struct DepData {
+    /// Identifies a crate by position in the crates array.
+    #[serde(rename = "crate")]
+    pub(crate) krate: usize,
+    #[serde(deserialize_with = "deserialize_crate_name")]
+    pub (crate) name: CrateName,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct CrateSource {
     include_dirs: Vec<PathBuf>,
     exclude_dirs: Vec<PathBuf>,
 }

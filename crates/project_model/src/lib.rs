@@ -23,6 +23,7 @@ mod sysroot;
 mod workspace;
 mod rustc_cfg;
 mod build_scripts;
+mod meta_to_project_json;
 
 #[cfg(test)]
 mod tests;
@@ -45,6 +46,7 @@ pub use crate::{
         TargetData, TargetKind,
     },
     manifest_path::ManifestPath,
+    meta_to_project_json::meta_to_json,
     project_json::{ProjectJson, ProjectJsonData},
     sysroot::Sysroot,
     workspace::{CfgOverrides, PackageRoot, ProjectWorkspace},

@@ -151,7 +151,7 @@ pub enum DepKind {
 }
 
 impl DepKind {
-    fn iter(list: &[cargo_metadata::DepKindInfo]) -> impl Iterator<Item = Self> + '_ {
+    pub fn iter(list: &[cargo_metadata::DepKindInfo]) -> impl Iterator<Item = Self> + '_ {
         let mut dep_kinds = Vec::new();
         if list.is_empty() {
             dep_kinds.push(Self::Normal);

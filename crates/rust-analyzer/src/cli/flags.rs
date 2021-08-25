@@ -105,7 +105,7 @@ xflags::xflags! {
 
         cmd json
             /// Directory with Cargo.toml.
-            required path: PathBuf 
+            required path: PathBuf
         {}
 
     }
@@ -198,7 +198,7 @@ pub struct Search {
 pub struct ProcMacro;
 
 #[derive(Debug)]
-pub struct Json{
+pub struct Json {
     pub path: PathBuf,
 }
 
