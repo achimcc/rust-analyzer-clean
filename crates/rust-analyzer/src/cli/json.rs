@@ -25,12 +25,9 @@ fn load_workspace_at(
     cargo_config: &CargoConfig,
     progress: &dyn Fn(String),
 ) -> Result<()> {
-    println!("begin!");
     let root = AbsPathBuf::assert(std::env::current_dir()?.join(root));
-    println!("AbsPathBuf: {:?}", root);
     let root = ManifestPath::try_from(root).unwrap(); 
     let meta = CargoWorkspace::fetch_metadata(&root, cargo_config, progress)?;
-    println!("starting conversion!");
     let json = meta_to_json(meta);
     println!("success: {:?}", json);
     Ok(())
