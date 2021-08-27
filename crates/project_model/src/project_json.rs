@@ -198,7 +198,7 @@ pub struct DepData {
     #[serde(rename = "crate")]
     pub(crate) krate: usize,
     #[serde(deserialize_with = "deserialize_crate_name")]
-    pub (crate) name: CrateName,
+    pub(crate) name: CrateName,
 }
 
 #[derive(Deserialize, Debug, Clone)]
