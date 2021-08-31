@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use base_db::{CrateDisplayName, CrateId, CrateName, Edition, Env, FileId, ProcMacro};
+use base_db::{CrateDisplayName, CrateGraph, CrateId, CrateName, Edition, Env, FileId, ProcMacro};
 use cfg::{CfgDiff, CfgOptions};
 use paths::{AbsPath, AbsPathBuf};
 use rustc_hash::FxHashMap;
@@ -108,6 +108,11 @@ impl CrateGraphJson {
 
     fn contains_dep(&self, from: u32, name: String) -> bool {
         self.deps.iter().any(|dep| dep.from == from && dep.name == name)
+    }
+
+    fn to_crate_graph(&self) -> CrateGraph {
+        let mut crate_graph = CrateGraph::default();
+        crate_graph
     }
 
     pub fn cargo_to_json(
