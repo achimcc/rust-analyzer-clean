@@ -8,7 +8,7 @@ mod highlight;
 mod analysis_stats;
 mod diagnostics;
 mod ssr;
-mod json;
+mod create_json;
 
 mod progress_report;
 

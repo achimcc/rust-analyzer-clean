@@ -30,13 +30,18 @@ fn load_workspace_at(
     cargo_config: &CargoConfig,
     progress: &dyn Fn(String),
 ) -> Result<()> {
-    let root = AbsPathBuf::assert(std::env::current_dir()?.join(root));
-    let cargo_toml = ManifestPath::try_from(root).unwrap();
+    let cargo_toml = AbsPathBuf::assert(std::env::current_dir()?.join(root.clone()));
+    let cargo_toml = ManifestPath::try_from(cargo_toml).unwrap();
     let meta = CargoWorkspace::fetch_metadata(&cargo_toml, cargo_config, progress)?;
-   // let json = serde_json::to_string(&meta).expect("serialization of crate_graph must work");
-   // println!("{:}", json);
+    // let json = serde_json::to_string(&meta).expect("serialization of crate_graph must work");
+    // println!("{:}", json);
     let json = meta_to_json(meta);
-    println!("{:?}", json);
+    let root = AbsPathBuf::assert(std::env::current_dir()?.join(root));
+    let json = ProjectJson::new(&root, json);
+    let ws = ProjectWorkspace::load_inline(json, None).unwrap();
+    println!("{:?}", ws);
+    // let json = serde_json::to_string(&json).expect("serialization of crate_graph must work");
+    // println!("{:?}", json);
     //    let project = ProjectJson::new(&cargo_toml.parent().to_path_buf(), json);
     //    println!("success: {:?}", project);
     Ok(())

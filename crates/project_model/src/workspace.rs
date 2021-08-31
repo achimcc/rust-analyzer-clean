@@ -13,6 +13,7 @@ use stdx::always;
 
 use crate::{
     build_scripts::BuildScriptOutput,
+    cargo_to_json::CrateGraphJson,
     cargo_workspace::{DepKind, PackageData, RustcSource},
     cfg_flag::CfgFlag,
     rustc_cfg,
@@ -389,6 +390,41 @@ impl ProjectWorkspace {
             log::debug!("Did not patch std to depend on cfg-if")
         }
         crate_graph
+    }
+
+    pub fn to_crate_graph_json(
+        &self,
+        load_proc_macro: &mut dyn FnMut(&AbsPath) -> Vec<ProcMacro>,
+        load: &mut dyn FnMut(&AbsPath) -> Option<FileId>,
+    ) -> Result<CrateGraphJson> {
+        let _p = profile::span("ProjectWorkspace::to_crate_graph");
+
+        let crate_graph_json = match self {
+            ProjectWorkspace::Json { project: _, sysroot: _, rustc_cfg: _ } => {
+                CrateGraphJson::default()
+            }
+            ProjectWorkspace::Cargo {
+                cargo,
+                sysroot,
+                rustc,
+                rustc_cfg,
+                cfg_overrides,
+                build_scripts,
+            } => CrateGraphJson::cargo_to_json(
+                rustc_cfg.clone(),
+                cfg_overrides,
+                load_proc_macro,
+                load,
+                cargo,
+                build_scripts,
+                sysroot.as_ref(),
+                rustc,
+            ),
+            ProjectWorkspace::DetachedFiles { files: _, sysroot: _, rustc_cfg: _ } => {
+                CrateGraphJson::default()
+            }
+        };
+        Ok(crate_graph_json)
     }
 }
 

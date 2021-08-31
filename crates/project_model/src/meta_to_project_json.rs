@@ -7,7 +7,6 @@ use rustc_hash::FxHashMap;
 use crate::{
     cargo_workspace::DepKind,
     project_json::{CrateData, DepData, EditionData, ProjectJsonData},
-    Package, Target,
 };
 
 pub fn meta_to_json(mut meta: cargo_metadata::Metadata) -> ProjectJsonData {
@@ -43,13 +42,13 @@ pub fn meta_to_json(mut meta: cargo_metadata::Metadata) -> ProjectJsonData {
             };
             crates.push(data);
             if crates.len() + 1 > root_id {
+                // Should not push root to its own deps!
                 let name = CrateName::normalize_dashes(&tgt.name);
                 let dep = DepData { krate: crates.len(), name };
-                crates[root_id].deps.push(dep); // ToDo: should not push root to deps
+                crates[root_id].deps.push(dep);
             }
         }
     }
-    println!("first part done!");
     let resolve = meta.resolve.expect("metadata executed with deps");
     for mut node in resolve.nodes {
         let source = match pkg_by_id.get(&node.id) {
