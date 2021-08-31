@@ -31,13 +31,18 @@ impl flags::Json {
         let root = ProjectManifest::discover_single(&root)?;
         let workspace = ProjectWorkspace::load(root, &cargo_config, &|_| {})?;
 
-        let crate_graph = load_workspace(workspace, &cargo_config, &load_cargo_config, &|_| {})?;
+        let crate_graph_json =
+            load_workspace(workspace, &cargo_config, &load_cargo_config, &|_| {})?;
 
         // let (_, change2) = get_crate_data(root, &|_| {})?;
 
-        let json =
-            serde_json::to_string(&crate_graph).expect("serialization of crate_graph must work");
+        let json = serde_json::to_string(&crate_graph_json)
+            .expect("serialization of crate_graph must work");
         println!("{}", json);
+
+        let crate_graph = crate_graph_json.to_crate_graph();
+
+        println!("Conversion successful: {:?}", crate_graph);
 
         // println!("change_json:\n{}", change_json);
 

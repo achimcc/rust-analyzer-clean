@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, str::FromStr};
 
 use base_db::{CrateDisplayName, CrateGraph, CrateId, CrateName, Edition, Env, FileId, ProcMacro};
 use cfg::{CfgDiff, CfgOptions};
@@ -110,8 +110,35 @@ impl CrateGraphJson {
         self.deps.iter().any(|dep| dep.from == from && dep.name == name)
     }
 
-    fn to_crate_graph(&self) -> CrateGraph {
+    pub fn to_crate_graph<'a>(&self) -> CrateGraph {
         let mut crate_graph = CrateGraph::default();
+        self.roots.iter().for_each(|root| {
+            let file_id = FileId(root.file_id);
+            let edition = root.edition.parse::<Edition>().unwrap_or_else(|err| {
+                log::error!("Failed to parse edition {}", err);
+                Edition::CURRENT
+            });
+            let display_name = match &root.display_name {
+                Some(name) => Some(CrateDisplayName::from_canonical_name(name.to_string())),
+                None => None,
+            };
+            let cfg_options = parse_cfg_options(&root.cfg_options);
+            let potential_cfg_options = parse_cfg_options(&root.potential_cfg_options);
+            let mut env = Env::default();
+            root.env
+                .iter()
+                .map(|(key, value)| (key, value))
+                .for_each(|(a, b)| env.set(a, b.to_string()));
+            crate_graph.add_crate_root(
+                file_id,
+                edition,
+                display_name,
+                cfg_options,
+                potential_cfg_options,
+                env,
+                Vec::new(),
+            );
+        });
         crate_graph
     }
 
@@ -256,6 +283,17 @@ impl CrateGraphJson {
         }
         crate_graph_json
     }
+}
+
+fn parse_cfg_options(options: &Vec<(String, Vec<String>)>) -> CfgOptions {
+    let mut cfg_options = CfgOptions::default();
+    options.iter().for_each(|(key, values)| {
+        let options = values.iter().map(|value| {
+            CfgFlag::from_str(format!("{}={}", key.as_str(), value.as_str()).as_str()).unwrap()
+        });
+        cfg_options.extend(options);
+    });
+    cfg_options
 }
 
 fn handle_rustc_crates(
