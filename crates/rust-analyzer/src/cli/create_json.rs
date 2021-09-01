@@ -4,10 +4,16 @@
 use anyhow::Result;
 use crossbeam_channel::{unbounded, Receiver};
 use proc_macro_api::ProcMacroClient;
-use project_model::{CargoConfig, ChangeJson, CrateGraphJson, ProjectManifest, ProjectWorkspace, WorkspaceBuildScripts};
+use project_model::{
+    CargoConfig, ChangeJson, CrateGraphJson, ProjectManifest, ProjectWorkspace,
+    WorkspaceBuildScripts,
+};
 use std::sync::Arc;
 
-use crate::{cli::load_cargo::LoadCargoConfig, reload::{ProjectFolders, SourceRootConfig, load_proc_macro}};
+use crate::{
+    cli::load_cargo::LoadCargoConfig,
+    reload::{load_proc_macro, ProjectFolders, SourceRootConfig},
+};
 
 use vfs::{loader::Handle, AbsPath, AbsPathBuf};
 
@@ -27,45 +33,16 @@ impl flags::Json {
         let root = ProjectManifest::discover_single(&root)?;
         let workspace = ProjectWorkspace::load(root, &cargo_config, &|_| {})?;
 
-        let change_json =
-            load_workspace(workspace, &cargo_config, &load_cargo_config, &|_| {})?;
-        // println!("res: {:?}", crate_graph_json);
-        // let (_, change2) = get_crate_data(root, &|_| {})?;
+        let change_json = load_change_json(workspace, &cargo_config, &load_cargo_config, &|_| {})?;
 
-        let json = serde_json::to_string(&change_json)
-            .expect("serialization of crate_graph must work");
+        let json =
+            serde_json::to_string(&change_json).expect("serialization of crate_graph must work");
         println!("{}", json);
-
-        // println!("Conversion successful: {:?}", crate_graph);
-
-        // println!("change_json:\n{}", change_json);
-
-        // deserialize from json string
-        /*
-        let deserialized_crate_graph: CrateGraph =
-            serde_json::from_str(&json).expect("deserialization must work");
-        assert_eq!(
-            crate_graph, deserialized_crate_graph,
-            "Deserialized `CrateGraph` is not equal!"
-        );
-        */
-
-        // Missing: Create a new `Change` object.
-        //
-        // `serde::Serialize` and `serde::Deserialize` are already supported by `Change`.
-        // So this should work out of the box after the object has been created:
-        //
-        // ```
-        // let json = serde_json::to_string(&change).expect("`Change` serialization must work");
-        // println!("change json:\n{}", json);
-        // let deserialized_change: Change = serde_json::from_str(&json).expect("`Change` deserialization must work");
-        // ```
-
         Ok(())
     }
 }
 
-pub fn load_workspace(
+pub fn load_change_json(
     mut ws: ProjectWorkspace,
     cargo_config: &CargoConfig,
     load_config: &LoadCargoConfig,
@@ -111,12 +88,13 @@ pub fn load_workspace(
 
     log::debug!("crate graph: {:?}", crate_graph_json);
 
-    let change_json = load_crate_graph(crate_graph_json, project_folders.source_root_config, &mut vfs, &receiver);
+    let change_json =
+        load_files(crate_graph_json, project_folders.source_root_config, &mut vfs, &receiver);
 
     Ok(change_json)
 }
 
-fn load_crate_graph(
+fn load_files(
     crate_graph_json: CrateGraphJson,
     source_root_config: SourceRootConfig,
     vfs: &mut vfs::Vfs,

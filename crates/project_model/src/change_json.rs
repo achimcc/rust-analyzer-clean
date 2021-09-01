@@ -10,7 +10,8 @@ use crate::CrateGraphJson;
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct ChangeJson {
     crate_graph: CrateGraphJson,
-    roots: SourceRootJson,
+    local_roots: SourceRootJson,
+    library_roots: SourceRootJson,
     files: FxHashMap<u32, Option<String>>,
 }
 
@@ -24,7 +25,8 @@ impl ChangeJson {
         self.files.insert(file_id, new_text);
     }
     pub fn set_roots(&mut self, roots: Vec<SourceRoot>) -> () {
-        self.roots = SourceRootJson::from_roots(&roots);
+        self.library_roots = SourceRootJson::from_roots(&roots, true);
+        self.local_roots = SourceRootJson::from_roots(&roots, false);
     }
     pub fn set_crate_graph(&mut self, crate_graph: CrateGraphJson) -> () {
         self.crate_graph = crate_graph;
@@ -37,10 +39,11 @@ struct SourceRootJson {
 }
 
 impl SourceRootJson {
-    pub fn from_roots(roots: &Vec<SourceRoot>) -> Self {
+    pub fn from_roots(roots: &Vec<SourceRoot>, library: bool) -> Self {
         let roots = roots
             .iter()
-            .flat_map(|val| val.iter().map(move |tst| (tst, val.path_for_file(&tst))))
+            .filter(|root| root.is_library == library)
+            .flat_map(|val| val.iter().map(move |file_id| (file_id, val.path_for_file(&file_id))))
             .map(|(id, path)| {
                 let id = id.0;
                 let path = match path {
@@ -51,5 +54,9 @@ impl SourceRootJson {
             })
             .collect::<Vec<(u32, Option<String>)>>();
         SourceRootJson { roots }
+    }
+    pub fn to_roots(&self) -> Vec<SourceRoot> {
+        let _ = self.roots.iter().for_each(|(id, root)| ());
+        Vec::new()
     }
 }
