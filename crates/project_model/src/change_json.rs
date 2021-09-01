@@ -32,7 +32,7 @@ impl ChangeJson {
         self.crate_graph = crate_graph;
     }
 
-    pub fn to_change(&mut self) -> Change {
+    pub fn to_change(&self) -> Change {
         let crate_graph = self.crate_graph.to_crate_graph().clone();
         let mut change = Change::default();
         change.set_crate_graph(crate_graph);

@@ -35,9 +35,11 @@ impl flags::Json {
 
         let change_json = load_change_json(workspace, &cargo_config, &load_cargo_config, &|_| {})?;
 
-        let json =
-            serde_json::to_string(&change_json).expect("serialization of crate_graph must work");
-        println!("{}", json);
+        let change = change_json.to_change();
+
+        // let json =
+        //    serde_json::to_string(&change_json).expect("serialization of crate_graph must work");
+        println!("{:?}", change);
         Ok(())
     }
 }
