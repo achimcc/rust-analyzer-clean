@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, str::FromStr};
+use std::{collections::VecDeque, str::FromStr, fmt};
 
 use base_db::{CrateDisplayName, CrateGraph, CrateId, CrateName, Edition, Env, FileId, ProcMacro};
 use cfg::{CfgDiff, CfgOptions};
@@ -43,8 +43,8 @@ impl Default for CrateGraphJson {
     }
 }
 
-impl std::fmt::Debug for CrateGraphJson {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for CrateGraphJson {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("CrateGraphJson")
             .field("Roots len", &self.roots.len())
             .field("Deps len", &self.deps.len())
