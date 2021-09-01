@@ -24,7 +24,8 @@ mod workspace;
 mod rustc_cfg;
 mod build_scripts;
 mod meta_to_project_json;
-mod cargo_to_json;
+mod crate_graph_json;
+mod change_json;
 
 #[cfg(test)]
 mod tests;
@@ -42,11 +43,12 @@ use rustc_hash::FxHashSet;
 
 pub use crate::{
     build_scripts::WorkspaceBuildScripts,
-    cargo_to_json::CrateGraphJson,
     cargo_workspace::{
         CargoConfig, CargoWorkspace, Package, PackageData, PackageDependency, RustcSource, Target,
         TargetData, TargetKind,
     },
+    change_json::ChangeJson,
+    crate_graph_json::CrateGraphJson,
     manifest_path::ManifestPath,
     meta_to_project_json::meta_to_json,
     project_json::{ProjectJson, ProjectJsonData},

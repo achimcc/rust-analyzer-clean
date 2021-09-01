@@ -2,15 +2,17 @@
 //! errors.
 
 use anyhow::Result;
-use crossbeam_channel::unbounded;
+use crossbeam_channel::{unbounded, Receiver};
 use proc_macro_api::ProcMacroClient;
 use project_model::{
-    CargoConfig, CrateGraphJson, ProjectManifest, ProjectWorkspace, WorkspaceBuildScripts,
+    CargoConfig, ChangeJson, CrateGraphJson, ProjectManifest, ProjectWorkspace,
+    WorkspaceBuildScripts,
 };
+use std::sync::Arc;
 
 use crate::{
     cli::load_cargo::LoadCargoConfig,
-    reload::{load_proc_macro, ProjectFolders},
+    reload::{load_proc_macro, ProjectFolders, SourceRootConfig},
 };
 
 use vfs::{loader::Handle, AbsPath, AbsPathBuf};
@@ -118,4 +120,44 @@ pub fn load_workspace(
     log::debug!("crate graph: {:?}", crate_graph);
 
     Ok(crate_graph)
+}
+
+fn load_crate_graph(
+    crate_graph_json: CrateGraphJson,
+    source_root_config: SourceRootConfig,
+    vfs: &mut vfs::Vfs,
+    receiver: &Receiver<vfs::loader::Message>,
+) -> ChangeJson {
+    let lru_cap = std::env::var("RA_LRU_CAP").ok().and_then(|it| it.parse::<usize>().ok());
+    let mut change_json = ChangeJson::default();
+    // wait until Vfs has loaded all roots
+    for task in receiver {
+        match task {
+            vfs::loader::Message::Progress { n_done, n_total, config_version: _ } => {
+                if n_done == n_total {
+                    break;
+                }
+            }
+            vfs::loader::Message::Loaded { files } => {
+                for (path, contents) in files {
+                    vfs.set_file_contents(path.into(), contents);
+                }
+            }
+        }
+    }
+    let changes = vfs.take_changes();
+    for file in changes {
+        if file.exists() {
+            let contents = vfs.file_contents(file.file_id).to_vec();
+            if let Ok(text) = String::from_utf8(contents) {
+                change_json.change_file(file.file_id, Some(Arc::new(text)))
+            }
+        }
+    }
+    let source_roots = source_root_config.partition(vfs);
+    change_json.set_roots(source_roots);
+
+    change_json.set_crate_graph(crate_graph_json);
+
+    change_json
 }

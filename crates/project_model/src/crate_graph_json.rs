@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, str::FromStr, fmt};
+use std::{collections::VecDeque, fmt, str::FromStr};
 
 use base_db::{CrateDisplayName, CrateGraph, CrateId, CrateName, Edition, Env, FileId, ProcMacro};
 use cfg::{CfgDiff, CfgOptions};

@@ -13,9 +13,9 @@ use stdx::always;
 
 use crate::{
     build_scripts::BuildScriptOutput,
-    cargo_to_json::CrateGraphJson,
     cargo_workspace::{DepKind, PackageData, RustcSource},
     cfg_flag::CfgFlag,
+    crate_graph_json::CrateGraphJson,
     rustc_cfg,
     sysroot::SysrootCrate,
     utf8_stdout, CargoConfig, CargoWorkspace, ManifestPath, ProjectJson, ProjectManifest, Sysroot,
