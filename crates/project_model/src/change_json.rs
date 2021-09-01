@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use base_db::{FileId, SourceRoot};
 
+use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
 use crate::CrateGraphJson;
@@ -10,7 +11,7 @@ use crate::CrateGraphJson;
 pub struct ChangeJson {
     crate_graph: CrateGraphJson,
     roots: SourceRootJson,
-    files: Vec<(u32, Option<String>)>,
+    files: FxHashMap<u32, Option<String>>,
 }
 
 impl ChangeJson {
@@ -20,7 +21,7 @@ impl ChangeJson {
             None => None,
         };
         let file_id = file_id.0;
-        self.files.push((file_id, new_text));
+        self.files.insert(file_id, new_text);
     }
     pub fn set_roots(&mut self, roots: Vec<SourceRoot>) -> () {
         self.roots = SourceRootJson::from_roots(&roots);

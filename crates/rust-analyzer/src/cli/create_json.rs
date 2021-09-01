@@ -4,16 +4,10 @@
 use anyhow::Result;
 use crossbeam_channel::{unbounded, Receiver};
 use proc_macro_api::ProcMacroClient;
-use project_model::{
-    CargoConfig, ChangeJson, CrateGraphJson, ProjectManifest, ProjectWorkspace,
-    WorkspaceBuildScripts,
-};
+use project_model::{CargoConfig, ChangeJson, CrateGraphJson, ProjectManifest, ProjectWorkspace, WorkspaceBuildScripts};
 use std::sync::Arc;
 
-use crate::{
-    cli::load_cargo::LoadCargoConfig,
-    reload::{load_proc_macro, ProjectFolders, SourceRootConfig},
-};
+use crate::{cli::load_cargo::LoadCargoConfig, reload::{ProjectFolders, SourceRootConfig, load_proc_macro}};
 
 use vfs::{loader::Handle, AbsPath, AbsPathBuf};
 
@@ -33,18 +27,16 @@ impl flags::Json {
         let root = ProjectManifest::discover_single(&root)?;
         let workspace = ProjectWorkspace::load(root, &cargo_config, &|_| {})?;
 
-        let crate_graph_json =
+        let change_json =
             load_workspace(workspace, &cargo_config, &load_cargo_config, &|_| {})?;
-        println!("res: {:?}", crate_graph_json);
+        // println!("res: {:?}", crate_graph_json);
         // let (_, change2) = get_crate_data(root, &|_| {})?;
 
-        let _json = serde_json::to_string(&crate_graph_json)
+        let json = serde_json::to_string(&change_json)
             .expect("serialization of crate_graph must work");
-        // println!("{}", json);
+        println!("{}", json);
 
-        let crate_graph = crate_graph_json.to_crate_graph();
-
-        println!("Conversion successful: {:?}", crate_graph);
+        // println!("Conversion successful: {:?}", crate_graph);
 
         // println!("change_json:\n{}", change_json);
 
@@ -78,8 +70,8 @@ pub fn load_workspace(
     cargo_config: &CargoConfig,
     load_config: &LoadCargoConfig,
     progress: &dyn Fn(String),
-) -> Result<CrateGraphJson> {
-    let (sender, _receiver) = unbounded();
+) -> Result<ChangeJson> {
+    let (sender, receiver) = unbounded();
     let mut vfs = vfs::Vfs::default();
     let mut loader = {
         let loader =
@@ -100,7 +92,7 @@ pub fn load_workspace(
         WorkspaceBuildScripts::default()
     });
 
-    let crate_graph = ws.to_crate_graph_json(
+    let crate_graph_json = ws.to_crate_graph_json(
         &mut |path: &AbsPath| load_proc_macro(proc_macro_client.as_ref(), path),
         &mut |path: &AbsPath| {
             let contents = loader.load_sync(path);
@@ -117,9 +109,11 @@ pub fn load_workspace(
         version: 0,
     });
 
-    log::debug!("crate graph: {:?}", crate_graph);
+    log::debug!("crate graph: {:?}", crate_graph_json);
 
-    Ok(crate_graph)
+    let change_json = load_crate_graph(crate_graph_json, project_folders.source_root_config, &mut vfs, &receiver);
+
+    Ok(change_json)
 }
 
 fn load_crate_graph(
@@ -128,7 +122,6 @@ fn load_crate_graph(
     vfs: &mut vfs::Vfs,
     receiver: &Receiver<vfs::loader::Message>,
 ) -> ChangeJson {
-    let lru_cap = std::env::var("RA_LRU_CAP").ok().and_then(|it| it.parse::<usize>().ok());
     let mut change_json = ChangeJson::default();
     // wait until Vfs has loaded all roots
     for task in receiver {
