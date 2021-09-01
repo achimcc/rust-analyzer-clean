@@ -110,7 +110,7 @@ impl CrateGraphJson {
         self.deps.iter().any(|dep| dep.from == from && dep.name == name)
     }
 
-    pub fn to_crate_graph<'a>(&self) -> CrateGraph {
+    pub fn to_crate_graph(&self) -> CrateGraph {
         let mut crate_graph = CrateGraph::default();
         self.roots.iter().for_each(|root| {
             let file_id = FileId(root.file_id);
