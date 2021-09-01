@@ -1,7 +1,8 @@
-use std::sync::Arc;
+use std::{convert::TryFrom, sync::Arc};
 
-use base_db::{FileId, SourceRoot};
+use base_db::{FileId, FileSet, SourceRoot, VfsPath};
 
+use paths::AbsPath;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
@@ -35,7 +36,7 @@ impl ChangeJson {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 struct SourceRootJson {
-    roots: Vec<(u32, Option<String>)>,
+    roots: Vec<Vec<(u32, Option<String>)>>,
 }
 
 impl SourceRootJson {
@@ -43,20 +44,48 @@ impl SourceRootJson {
         let roots = roots
             .iter()
             .filter(|root| root.is_library == library)
-            .flat_map(|val| val.iter().map(move |file_id| (file_id, val.path_for_file(&file_id))))
-            .map(|(id, path)| {
-                let id = id.0;
-                let path = match path {
-                    Some(path) => Some(path.to_string()),
-                    None => None,
-                };
-                (id, path)
+            .map(|val| {
+                val.iter()
+                    .map(move |file_id| (file_id, val.path_for_file(&file_id)))
+                    .map(|(id, path)| {
+                        let id = id.0;
+                        let path = match path {
+                            Some(path) => Some(path.to_string()),
+                            None => None,
+                        };
+                        (id, path)
+                    })
+                    .collect::<Vec<(u32, Option<String>)>>()
             })
-            .collect::<Vec<(u32, Option<String>)>>();
+            .collect::<Vec<Vec<(u32, Option<String>)>>>();
         SourceRootJson { roots }
     }
-    pub fn to_roots(&self) -> Vec<SourceRoot> {
-        let _ = self.roots.iter().for_each(|(id, root)| ());
-        Vec::new()
+    pub fn to_roots(&self, library: bool) -> Vec<SourceRoot> {
+        let result = self
+            .roots
+            .iter()
+            .map(|root| {
+                let mut file_set = FileSet::default();
+                root.iter().for_each(|(file_id, path)| {
+                    let file_id = FileId(*file_id);
+                    match path {
+                        Some(path) => {
+                            let path = VfsPath::new_virtual_path(path.to_string());
+                            file_set.insert(file_id, path);
+                        }
+                        None => (),
+                    };
+                });
+                file_set
+            })
+            .map(|file_set| {
+                if library {
+                    SourceRoot::new_library(file_set)
+                } else {
+                    SourceRoot::new_local(file_set)
+                }
+            })
+            .collect::<Vec<_>>();
+        result
     }
 }
