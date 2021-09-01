@@ -31,7 +31,7 @@ pub struct Dep {
     to: u32,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct CrateGraphJson {
     roots: Vec<CrateRoot>,
     deps: Vec<Dep>,
@@ -43,9 +43,17 @@ impl Default for CrateGraphJson {
     }
 }
 
+impl std::fmt::Debug for CrateGraphJson {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CrateGraphJson")
+            .field("Roots len", &self.roots.len())
+            .field("Deps len", &self.deps.len())
+            .finish()
+    }
+}
+
 impl CrateGraphJson {
     fn add_dep(&mut self, dep: Dep) {
-        println!("Dep: {:?}", dep);
         self.deps.push(dep);
     }
 
@@ -104,7 +112,7 @@ impl CrateGraphJson {
             env,
             proc_macro: Vec::new(),
         });
-        self.roots.len() as u32
+        self.roots.len() as u32 - 1
     }
 
     fn contains_dep(&self, from: u32, name: String) -> bool {
@@ -139,15 +147,13 @@ impl CrateGraphJson {
                 env,
                 Vec::new(),
             );
-           // println!("id: {}, crate_id: {}", id as u32, crate_id.0);
             assert_eq!(id as u32, crate_id.0, "Id from CrateGraph should match denpendency Id's!");
         });
         self.deps.iter().for_each(|dep| {
             let from = CrateId(dep.from);
             let to = CrateId(dep.to);
             if let Ok(name) = CrateName::new(&dep.name) {
-            //    / println!("from: {}, name: {}, to: {}", from.0, name, to.0);
-                if from.0 < 617 { let _ = crate_graph.add_dep(from, name, to); };
+                let _ = crate_graph.add_dep(from, name, to);
             };
         });
         crate_graph
@@ -268,7 +274,6 @@ impl CrateGraphJson {
                             // Build scripts may only depend on build dependencies.
                             continue;
                         }
-
                         add_dep(&mut crate_graph_json, *from, name.clone(), to)
                     }
                 }
@@ -401,7 +406,7 @@ fn handle_rustc_crates(
 }
 
 fn add_target_crate_root(
-    crate_graph: &mut CrateGraphJson,
+    crate_graph_json: &mut CrateGraphJson,
     pkg: &PackageData,
     build_data: Option<&BuildScriptOutput>,
     cfg_options: &CfgOptions,
@@ -444,7 +449,7 @@ fn add_target_crate_root(
             .map(|feat| CfgFlag::KeyValue { key: "feature".into(), value: feat.0.into() }),
     );
 
-    let crate_id = crate_graph.add_crate_root(
+    let crate_id = crate_graph_json.add_crate_root(
         file_id,
         edition,
         Some(display_name),

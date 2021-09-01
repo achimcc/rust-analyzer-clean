@@ -33,7 +33,7 @@ impl flags::Json {
 
         let crate_graph_json =
             load_workspace(workspace, &cargo_config, &load_cargo_config, &|_| {})?;
-
+        println!("res: {:?}", crate_graph_json);
         // let (_, change2) = get_crate_data(root, &|_| {})?;
 
         let _json = serde_json::to_string(&crate_graph_json)
