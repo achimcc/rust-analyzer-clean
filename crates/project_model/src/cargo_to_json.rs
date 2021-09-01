@@ -45,6 +45,7 @@ impl Default for CrateGraphJson {
 
 impl CrateGraphJson {
     fn add_dep(&mut self, dep: Dep) {
+        println!("Dep: {:?}", dep);
         self.deps.push(dep);
     }
 
@@ -138,14 +139,15 @@ impl CrateGraphJson {
                 env,
                 Vec::new(),
             );
+           // println!("id: {}, crate_id: {}", id as u32, crate_id.0);
             assert_eq!(id as u32, crate_id.0, "Id from CrateGraph should match denpendency Id's!");
         });
         self.deps.iter().for_each(|dep| {
             let from = CrateId(dep.from);
             let to = CrateId(dep.to);
             if let Ok(name) = CrateName::new(&dep.name) {
-                println!("from: {}, name: {}, to: {}", from.0, name, to.0);
-                let _ = crate_graph.add_dep(from, name, to);
+            //    / println!("from: {}, name: {}, to: {}", from.0, name, to.0);
+                if from.0 < 617 { let _ = crate_graph.add_dep(from, name, to); };
             };
         });
         crate_graph

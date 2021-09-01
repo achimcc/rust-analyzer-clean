@@ -40,9 +40,9 @@ impl flags::Json {
             .expect("serialization of crate_graph must work");
         // println!("{}", json);
 
-        let _crate_graph = crate_graph_json.to_crate_graph();
+        let crate_graph = crate_graph_json.to_crate_graph();
 
-        // println!("Conversion successful: {:?}", crate_graph);
+        println!("Conversion successful: {:?}", crate_graph);
 
         // println!("change_json:\n{}", change_json);
 
