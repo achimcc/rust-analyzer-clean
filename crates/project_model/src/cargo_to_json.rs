@@ -289,7 +289,9 @@ fn parse_cfg_options(options: &Vec<(String, Vec<String>)>) -> CfgOptions {
     let mut cfg_options = CfgOptions::default();
     options.iter().for_each(|(key, values)| {
         let options = values.iter().map(|value| {
-            CfgFlag::from_str(format!("{}={}", key.as_str(), value.as_str()).as_str()).unwrap()
+            let str = format!("{}=\"{}\"", key.as_str(), value.as_str());
+            println!("{}", str);
+            CfgFlag::from_str(&str).unwrap()
         });
         cfg_options.extend(options);
     });
