@@ -36,13 +36,13 @@ impl flags::Json {
 
         // let (_, change2) = get_crate_data(root, &|_| {})?;
 
-        let json = serde_json::to_string(&crate_graph_json)
+        let _json = serde_json::to_string(&crate_graph_json)
             .expect("serialization of crate_graph must work");
-        println!("{}", json);
+        // println!("{}", json);
 
-        let crate_graph = crate_graph_json.to_crate_graph();
+        let _crate_graph = crate_graph_json.to_crate_graph();
 
-        println!("Conversion successful: {:?}", crate_graph);
+        // println!("Conversion successful: {:?}", crate_graph);
 
         // println!("change_json:\n{}", change_json);
 

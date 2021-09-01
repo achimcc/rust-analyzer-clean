@@ -39,7 +39,7 @@ fn load_workspace_at(
     let root = AbsPathBuf::assert(std::env::current_dir()?.join(root));
     let json = ProjectJson::new(&root, json);
     let ws = ProjectWorkspace::load_inline(json, None).unwrap();
-    println!("{:?}", ws);
+    // println!("{:?}", ws);
     // let json = serde_json::to_string(&json).expect("serialization of crate_graph must work");
     // println!("{:?}", json);
     //    let project = ProjectJson::new(&cargo_toml.parent().to_path_buf(), json);

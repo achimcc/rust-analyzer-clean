@@ -112,7 +112,7 @@ impl CrateGraphJson {
 
     pub fn to_crate_graph(&self) -> CrateGraph {
         let mut crate_graph = CrateGraph::default();
-        self.roots.iter().for_each(|root| {
+        self.roots.iter().enumerate().for_each(|(id, root)| {
             let file_id = FileId(root.file_id);
             let edition = root.edition.parse::<Edition>().unwrap_or_else(|err| {
                 log::error!("Failed to parse edition {}", err);
@@ -129,7 +129,7 @@ impl CrateGraphJson {
                 .iter()
                 .map(|(key, value)| (key, value))
                 .for_each(|(a, b)| env.set(a, b.to_string()));
-            crate_graph.add_crate_root(
+            let crate_id = crate_graph.add_crate_root(
                 file_id,
                 edition,
                 display_name,
@@ -138,6 +138,15 @@ impl CrateGraphJson {
                 env,
                 Vec::new(),
             );
+            assert_eq!(id as u32, crate_id.0, "Id from CrateGraph should match denpendency Id's!");
+        });
+        self.deps.iter().for_each(|dep| {
+            let from = CrateId(dep.from);
+            let to = CrateId(dep.to);
+            if let Ok(name) = CrateName::new(&dep.name) {
+                println!("from: {}, name: {}, to: {}", from.0, name, to.0);
+                let _ = crate_graph.add_dep(from, name, to);
+            };
         });
         crate_graph
     }
@@ -290,7 +299,6 @@ fn parse_cfg_options(options: &Vec<(String, Vec<String>)>) -> CfgOptions {
     options.iter().for_each(|(key, values)| {
         let options = values.iter().map(|value| {
             let str = format!("{}=\"{}\"", key.as_str(), value.as_str());
-            println!("{}", str);
             CfgFlag::from_str(&str).unwrap()
         });
         cfg_options.extend(options);
