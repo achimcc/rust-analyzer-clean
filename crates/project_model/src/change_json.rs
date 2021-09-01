@@ -1,6 +1,6 @@
 use std::{convert::TryFrom, sync::Arc};
 
-use base_db::{FileId, FileSet, SourceRoot, VfsPath};
+use base_db::{Change, FileId, FileSet, SourceRoot, VfsPath};
 
 use paths::AbsPath;
 use rustc_hash::FxHashMap;
@@ -31,6 +31,16 @@ impl ChangeJson {
     }
     pub fn set_crate_graph(&mut self, crate_graph: CrateGraphJson) -> () {
         self.crate_graph = crate_graph;
+    }
+
+    pub fn to_change(&mut self) -> Change {
+        let crate_graph = self.crate_graph.to_crate_graph().clone();
+        let mut change = Change::default();
+        change.set_crate_graph(crate_graph);
+        let mut roots = self.local_roots.to_roots(false);
+        roots.append(&mut self.library_roots.to_roots(true));
+        change.set_roots(roots);
+        change
     }
 }
 
