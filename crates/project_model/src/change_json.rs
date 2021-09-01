@@ -1,8 +1,7 @@
-use std::{convert::TryFrom, sync::Arc};
+use std::sync::Arc;
 
 use base_db::{Change, FileId, FileSet, SourceRoot, VfsPath};
 
-use paths::AbsPath;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
@@ -40,6 +39,14 @@ impl ChangeJson {
         let mut roots = self.local_roots.to_roots(false);
         roots.append(&mut self.library_roots.to_roots(true));
         change.set_roots(roots);
+        self.files.iter().for_each(|(id, text)| {
+            let id = FileId(*id);
+            let text = match text {
+                Some(text) => Some(Arc::new(text.to_string())),
+                None => None,
+            };
+            change.change_file(id, text)
+        });
         change
     }
 }
